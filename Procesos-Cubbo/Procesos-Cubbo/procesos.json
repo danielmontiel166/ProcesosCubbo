@@ -1,0 +1,76 @@
+let baseDeProcesos = {};
+
+// Obtener contenedor y categoría
+const contenedor = document.getElementById('procesos-container');
+const urlParams = new URLSearchParams(window.location.search);
+const categoria = urlParams.get('categoria');
+
+// Buscar datos en localStorage o cargar de JSON externo
+const localData = localStorage.getItem("procesosCubbo");
+if (localData) {
+  baseDeProcesos = JSON.parse(localData);
+  renderizarProcesos();
+} else {
+  fetch("procesos.json")
+    .then(res => res.json())
+    .then(json => {
+      baseDeProcesos = json;
+      renderizarProcesos();
+    })
+    .catch(err => {
+      console.error("Error al cargar procesos.json", err);
+      contenedor.innerHTML = "<p>Error al cargar los procesos.</p>";
+    });
+}
+
+// Función de renderizado
+function renderizarProcesos() {
+  if (!baseDeProcesos[categoria]) {
+    contenedor.innerHTML = "<p>No se encontraron procesos para esta categoría.</p>";
+    return;
+  }
+
+  document.getElementById("titulo").textContent =
+    `Procesos ${categoria.charAt(0).toUpperCase() + categoria.slice(1)}`;
+  contenedor.innerHTML = "";
+
+  baseDeProcesos[categoria].forEach(proc => {
+    const card = document.createElement("div");
+    card.classList.add("productos");
+
+    card.innerHTML = `
+      <a href="${proc.link}" target="_blank">
+        <h3>${proc.icono || "🔗"} ${proc.titulo}</h3>
+      </a>
+    `;
+
+    contenedor.appendChild(card);
+  });
+}
+
+// Formulario (si existe)
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("nuevo-proceso-form");
+
+  if (form) {
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const titulo = document.getElementById("titulo").value;
+      const link = document.getElementById("link").value;
+      const icono = document.getElementById("icono").value;
+
+      const nuevo = { titulo, link, icono };
+
+      if (!baseDeProcesos[categoria]) baseDeProcesos[categoria] = [];
+      baseDeProcesos[categoria].push(nuevo);
+
+      localStorage.setItem("procesosCubbo", JSON.stringify(baseDeProcesos));
+
+      renderizarProcesos();
+      form.reset();
+      alert("Proceso agregado correctamente.");
+    });
+  }
+});
+
